@@ -367,11 +367,11 @@ export default {
       defaultValue: { activeHref: '', activeLabel: '', totalItems: 0 },
     }) || { value: ref({}), setValue: () => {} };
 
-    // Track manually selected item
-    const manuallySelectedHref = ref('');
+    // Track manually selected item by ID
+    const manuallySelectedId = ref('');
 
     // Active state detection logic
-    const determineActive = (href, manualActive) => {
+    const determineActive = (id, href, manualActive) => {
       const mode = props.content?.activeDetection || 'both';
       let currentPath = props.content?.currentPath;
 
@@ -380,8 +380,8 @@ export default {
         currentPath = window.location.pathname;
       }
 
-      // Check if this href was manually selected
-      const isManuallySelected = manuallySelectedHref.value === href;
+      // Check if this item was manually selected by ID
+      const isManuallySelected = manuallySelectedId.value === id;
 
       if (mode === 'manual') {
         return isManuallySelected || manualActive || false;
@@ -409,7 +409,7 @@ export default {
             id: subItemId,
             label: subItem.label || 'Untitled',
             href: subItem.href || '#',
-            isActive: determineActive(subItem.href, subItem.active),
+            isActive: determineActive(subItemId, subItem.href, subItem.active),
             index: subIndex,
             originalItem: subItem,
           };
@@ -419,7 +419,7 @@ export default {
         const hasActiveChild = processedSubItems.some(sub => sub.isActive);
         const selectedSubItemIndex = processedSubItems.findIndex(sub => sub.isActive);
         const isExpanded = expandedItems.value.has(itemId);
-        const isActive = determineActive(item.href, item.active);
+        const isActive = determineActive(itemId, item.href, item.active);
 
         // Support both 'imageSource'/'activeImageSource' AND 'image'/'activeImage' property names
         const resolvedImageSource = item.imageSource || item.image || '';
@@ -467,11 +467,13 @@ export default {
       const settings = props.content?.settingsItem || null;
       if (!settings) return null;
       
+      const settingsId = settings.id || 'settings';
       const settingsHref = settings.href || '#';
       // Only determine active if href is not just '#'
-      const isActive = settingsHref !== '#' ? determineActive(settingsHref, settings.active) : (settings.active || false);
+      const isActive = settingsHref !== '#' ? determineActive(settingsId, settingsHref, settings.active) : (settings.active || false);
       
       return {
+        id: settingsId,
         label: settings.label || 'Settings',
         href: settingsHref,
         icon: settings.icon || '',
@@ -514,7 +516,7 @@ export default {
             imageSource: resolvedImageSource,
             activeImageSource: resolvedActiveImageSource,
             badge: item.badge || '',
-            isActive: determineActive(item.href || '#', item.active),
+            isActive: determineActive(itemId, item.href || '#', item.active),
             originalItem: item,
           };
         }).filter(item => item !== null);
@@ -849,8 +851,8 @@ export default {
         }
       }
       
-      // Update manually selected href
-      manuallySelectedHref.value = item.href;
+      // Update manually selected id
+      manuallySelectedId.value = item.id;
       currentActiveHref.value = item.href;
       setInternalActiveHref(item.href);
       
@@ -910,7 +912,7 @@ export default {
       const previousHref = currentActiveHref.value;
       
       // Update active state
-      manuallySelectedHref.value = subItem.href;
+      manuallySelectedId.value = subItem.id;
       currentActiveHref.value = subItem.href;
       setInternalActiveHref(subItem.href);
       setActiveParentHref(parentItem.href);
@@ -976,7 +978,7 @@ export default {
       const previousHref = currentActiveHref.value;
       
       // Update active state
-      manuallySelectedHref.value = item.href;
+      manuallySelectedId.value = item.id;
       currentActiveHref.value = item.href;
       setInternalActiveHref(item.href);
 
@@ -1041,7 +1043,7 @@ export default {
       const label = homeRoute.value?.label || 'Home';
 
       // Clear manual selection when clicking home
-      manuallySelectedHref.value = '';
+      manuallySelectedId.value = '';
       setActiveParentHref('');
       
       // Collapse all expanded items when clicking home
@@ -1104,7 +1106,7 @@ export default {
       }
 
       // Update active state
-      manuallySelectedHref.value = href;
+      manuallySelectedId.value = settingsItem.value?.id || 'settings';
       currentActiveHref.value = href;
       setInternalActiveHref(href);
 
